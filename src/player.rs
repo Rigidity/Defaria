@@ -4,8 +4,8 @@ use crate::{Camera3d, MouseMotion};
 
 #[derive(Component, Default)]
 pub struct Player {
-    pitch: f32,
-    yaw: f32,
+    pub pitch: f32,
+    pub yaw: f32,
 }
 
 pub fn grab_mouse(mut windows: ResMut<Windows>) {
@@ -15,12 +15,12 @@ pub fn grab_mouse(mut windows: ResMut<Windows>) {
 }
 
 pub fn create_player(mut commands: Commands) {
-    commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-    }).insert(Player {
-        ..default()
-    });
+    commands
+        .spawn_bundle(PerspectiveCameraBundle {
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            ..default()
+        })
+        .insert(Player { ..default() });
 }
 
 pub fn manage_mouse(
@@ -44,20 +44,21 @@ pub fn rotate_camera(
     mut camera: Query<(&mut Player, &mut Transform), With<Camera3d>>,
     mut mouse_motion: EventReader<MouseMotion>,
 ) {
-    let speed = 0.05;
+    let speed = 0.06;
 
-    let mut window = windows.get_primary_mut().unwrap();
+    let window = windows.get_primary_mut().unwrap();
 
     for (mut player, mut camera_transform) in camera.iter_mut() {
         for event in mouse_motion.iter() {
             if window.cursor_locked() {
-                player.pitch -=
-                    (speed * event.delta.y).to_radians();
+                player.pitch -= (speed * event.delta.y).to_radians();
                 player.yaw -= (speed * event.delta.x).to_radians();
             }
         }
 
-        player.pitch = player.pitch.clamp(-90.0f32.to_radians(), 90.0f32.to_radians());
+        player.pitch = player
+            .pitch
+            .clamp(-90.0f32.to_radians(), 90.0f32.to_radians());
 
         let y_rotation = Quat::from_axis_angle(Vec3::Y, player.yaw);
         let x_rotation = Quat::from_axis_angle(Vec3::X, player.pitch);
@@ -72,7 +73,7 @@ pub fn move_camera(
     keyboard_input: Res<Input<KeyCode>>,
     mut camera: Query<&mut Transform, With<Camera3d>>,
 ) {
-    let speed = 3.0 * time.delta_seconds();
+    let speed = 6.0 * time.delta_seconds();
 
     let window = windows.get_primary().unwrap();
 
