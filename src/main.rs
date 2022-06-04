@@ -3,15 +3,16 @@ extern crate core;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::render::camera::Camera3d;
+use game::run_ingame;
 use registry::ClientRegistry;
+use world::{build_chunks, generate_chunks};
 
 use crate::game::{
-    check_assets, load_assets, load_block_models, load_blocks, setup_assets, AssetHandles,
-    GameState,
+    check_assets, load_assets, load_block_models, load_blocks, AssetHandles, GameState,
 };
 use crate::player::{create_player, grab_mouse, manage_mouse, move_camera, rotate_camera};
 use crate::registry::Registry;
-use crate::render::create_world;
+use crate::world::create_world;
 
 mod chunk;
 mod game;
@@ -19,6 +20,8 @@ mod key;
 mod player;
 mod registry;
 mod render;
+mod utils;
+mod world;
 
 fn main() {
     App::new()
@@ -43,13 +46,18 @@ fn main() {
         .add_system_set(SystemSet::on_update(GameState::Loading).with_system(check_assets))
         .add_system_set(
             SystemSet::on_enter(GameState::Ingame)
-                .with_system(setup_assets)
-                .with_system(grab_mouse.after(setup_assets))
-                .with_system(create_player.after(setup_assets))
-                .with_system(create_world.after(setup_assets)),
+                .with_system(grab_mouse)
+                .with_system(create_player)
+                .with_system(create_world),
         )
-        .add_system(manage_mouse)
-        .add_system(rotate_camera)
-        .add_system(move_camera.after(setup_assets))
+        .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(run_ingame)
+                .with_system(manage_mouse)
+                .with_system(rotate_camera)
+                .with_system(move_camera)
+                .with_system(generate_chunks)
+                .with_system(build_chunks),
+        )
         .run();
 }
